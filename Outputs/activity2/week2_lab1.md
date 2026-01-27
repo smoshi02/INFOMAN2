@@ -2,7 +2,7 @@
 
 Task: Write a PL/pgSQL function called get_flight_duration that accepts a flight ID and returns the flight's duration as an INTERVAL.
 
-![](images/image1.png)
+![](images/q1_result.png)
 
 # Activity 2 - Goal: Use an IF statement to categorize flights based on their price.
 
@@ -12,7 +12,7 @@ Task: Write a function called get_price_category that takes a flight ID, checks 
 - 'Standard' if the price is between $300 and $800 (inclusive).
 - 'Premium' if the price is more than $800.
 
-![](images/image2.png)
+![](images/q2_result.png)
 
 # Activty 3 - Goal: Create a procedure to handle the action of booking a flight for a passenger.
 
@@ -20,7 +20,7 @@ Task: Write a procedure book_flight that takes a passenger ID, a flight ID, and 
 
 Hint: Unlike a function, a procedure does not return a value. It is called using the CALL command.
 
-![](images/image3.png)
+![](images/q3_result.png)
 
 # Activty 4 - Goal: Use a FOR loop to iterate through a query's results and perform an update.
 
@@ -28,4 +28,4 @@ Task: Create a procedure increase_prices_for_airline that accepts an airline ID 
 
 Hint: You can declare a record variable to hold each row from the SELECT query inside the loop.
 
-![](images/image4.png)
+![](images/q4_result.png)
