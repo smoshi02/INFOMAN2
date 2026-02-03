@@ -66,5 +66,5 @@ Single Row Insertion Time (With Index): 2.755 ms
 
 3. What is the trade-off of having an index on a table? (Hint: Compare the initial bulk insertion time with the single row insertion time after the index was created).
 
-- The trade-off of having an index is that it slightly slows down data modifications. For example, inserting a single row after creating the index took about 2.755 ms, whereas bulk inserting 10,000 rows into a table without indexes took roughly 124–167 ms per batch. Maintaining the index adds overhead for each insert, update, or delete operation because the database must update the index structure along with the table data.
+- The trade-off of having an index is that it slightly slows down data modifications. Based on my psql, inserting a single row after creating the index took about 2.755 ms, whereas bulk inserting 10,000 rows into a table without indexes took roughly 124–167 ms per batch. Maintaining the index adds overhead for each insert, update, or delete operation because the database must update the index structure along with the table data.
 
