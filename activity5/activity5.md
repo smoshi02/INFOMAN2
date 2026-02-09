@@ -46,7 +46,7 @@ Record the time it takes to insert this single row.
 
 Fill in the following with your recorded measurements.
 
-Initial Data Insertion Time (1,000,000 rows): 167.529 ms
+Initial Data Insertion Time (100,000 rows): 167.529 ms the last time insertion
 
 Query Execution Time (Non-Indexed): 5.957 ms
 
