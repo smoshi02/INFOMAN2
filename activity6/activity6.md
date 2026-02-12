@@ -24,10 +24,6 @@ BEFORE
 Time: 2.248 ms
 ```
 
-
-CREATE INDEX idx_author_id on posts (author_id);
-CREATE INDEX idx_date on posts (date);
-
 AFTER
 ```txt
                                                            QUERY PLAN
