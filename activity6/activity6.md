@@ -151,7 +151,7 @@ ii Analysis Questions:
 
 Non-Sargable
 ```txt
-EXPLAIN ANALYZE SELECT * FROM posts WHERE EXTRACT(YEAR FROM "date") = 2000 AND EXTRACT (MONTH FROM "date") = 1;
+EXPLAIN ANALYZE SELECT date FROM posts WHERE EXTRACT(YEAR FROM "date") = 2000 AND EXTRACT (MONTH FROM "date") = 1;
 ```
 
 1. This query is not S-ARGable. What does that mean in the context of this query? Why can't the query planner use a simple index on the date column effectively?
@@ -161,8 +161,9 @@ EXPLAIN ANALYZE SELECT * FROM posts WHERE EXTRACT(YEAR FROM "date") = 2000 AND E
 2. Rewrite the query to use a direct date range comparison, making it S-ARGable.
 
 ```txt
-EXPLAIN ANALYZE SELECT * FROM posts WHERE "date" >= DATE '2000-01-01' AND "date" < DATE '2000-02-01';
+EXPLAIN ANALYZE SELECT date FROM posts WHERE "date" >= DATE '2000-01-01' AND "date" < DATE '2000-02-01';
 ```
+* This version compares the column directly to constant values, which allows PostgreSQL to use the index efficiently.
 
 3. Create an appropriate index to support your rewritten query.
 
@@ -173,42 +174,82 @@ CREATE INDEX idx_date ON posts(date);
 
 BEFORE(NON-SARGABLE)
 ```txt
-activity6=# EXPLAIN ANALYZE SELECT * FROM posts WHERE EXTRACT(YEAR FROM "date") = 2000 AND EXTRACT (MONTH FROM "date") = 1;
+activity6=# EXPLAIN ANALYZE SELECT date FROM posts WHERE EXTRACT(YEAR FROM "date") = 2000 AND EXTRACT (MONTH FROM "date") = 1;
                                               QUERY PLAN
 -------------------------------------------------------------------------------------------------------
- Seq Scan on posts  (cost=0.00..700.00 rows=1 width=366) (actual time=0.335..2.479 rows=14.00 loops=1)
+ Seq Scan on posts  (cost=0.00..700.00 rows=1 width=4) (actual time=0.346..2.978 rows=14.00 loops=1)
    Filter: ((EXTRACT(year FROM date) = '2000'::numeric) AND (EXTRACT(month FROM date) = '1'::numeric))
    Rows Removed by Filter: 9986
    Buffers: shared hit=500
  Planning:
-   Buffers: shared hit=16 read=1 dirtied=2
- Planning Time: 0.531 ms
- Execution Time: 2.497 ms
+   Buffers: shared hit=6
+ Planning Time: 0.266 ms
+ Execution Time: 2.998 ms
 (8 rows)
 
 
-Time: 3.525 ms
+Time: 3.889 ms
 ```
 
 AFTER(SARGABLE)
 ```txt
-activity6=# EXPLAIN ANALYZE SELECT * FROM posts WHERE "date" >= DATE '2000-01-01' AND "date" < DATE '2000-02-01';
-                                                      QUERY PLAN
-----------------------------------------------------------------------------------------------------------------------
- Bitmap Heap Scan on posts  (cost=4.45..60.10 rows=16 width=366) (actual time=0.116..0.126 rows=14.00 loops=1)
-   Recheck Cond: ((date >= '2000-01-01'::date) AND (date < '2000-02-01'::date))
-   Heap Blocks: exact=14
-   Buffers: shared hit=14 read=2
-   ->  Bitmap Index Scan on idx_date  (cost=0.00..4.45 rows=16 width=0) (actual time=0.105..0.105 rows=14.00 loops=1)
-         Index Cond: ((date >= '2000-01-01'::date) AND (date < '2000-02-01'::date))
-         Index Searches: 1
-         Buffers: shared read=2
- Planning Time: 0.086 ms
- Execution Time: 0.139 ms
+activity6=# EXPLAIN ANALYZE SELECT date FROM posts WHERE "date" >= DATE '2000-01-01' AND "date" < DATE '2000-02-01';
+                                              QUERY PLAN
+------------------------------------------------------------------------------------------------------
+ Seq Scan on posts  (cost=0.00..650.00 rows=16 width=4) (actual time=0.259..2.203 rows=14.00 loops=1)
+   Filter: ((date >= '2000-01-01'::date) AND (date < '2000-02-01'::date))
+   Rows Removed by Filter: 9986
+   Buffers: shared hit=500
+ Planning Time: 0.440 ms
+ Execution Time: 2.224 ms
+(6 rows)
+
+
+Time: 3.255 ms
+```
+
+* Even though the query is SARGable, PostgreSQL still performed a **Sequential Scan** because there was no index on the date column. As a result, it scanned all 10,000 rows and filtered out 9,986 rows to return only 14. However, it executed slightly faster (~2.224 ms) than the non-SARGable version because it used direct date comparisons instead of computing the EXTRACT() function for every row. This reduced computational overhead, even though the entire table was still scanned.
+
+
+
+
+BEFORE(NON-SARGABLE) - with index
+```txt
+activity6=# EXPLAIN ANALYZE SELECT date FROM posts WHERE EXTRACT(YEAR FROM "date") = 2000 AND EXTRACT (MONTH FROM "date") = 1;
+                                                        QUERY PLAN                                                      
+---------------------------------------------------------------------------------------------------------------------------
+ Index Only Scan using idx_date on posts  (cost=0.29..362.29 rows=1 width=4) (actual time=1.504..2.679 rows=14.00 loops=1)
+   Filter: ((EXTRACT(year FROM date) = '2000'::numeric) AND (EXTRACT(month FROM date) = '1'::numeric))
+   Rows Removed by Filter: 9986
+   Heap Fetches: 0
+   Index Searches: 1
+   Buffers: shared hit=1 read=27
+ Planning:
+   Buffers: shared hit=16 read=1
+ Planning Time: 0.533 ms
+ Execution Time: 2.701 ms
 (10 rows)
 
 
-Time: 0.695 ms
+Time: 4.032 ms
 ```
 
-* Based on the query, the non-SARGable query scanned all rows using a sequential scan and took about 2.497 milliseconds. The SARGable query, on the other hand, used the idx_date index, scanned only 14 rows, and executed in about 0.139 milliseconds. This clearly showed me that making a query SARGable and using an appropriate index improves efficiency and scalability.
+AFTER(SARGABLE) -with index
+```txt
+activity6=# EXPLAIN ANALYZE SELECT date FROM posts WHERE "date" >= DATE '2000-01-01' AND "date" < DATE '2000-02-01';
+                                                        QUERY PLAN                                                      
+--------------------------------------------------------------------------------------------------------------------------
+ Index Only Scan using idx_date on posts  (cost=0.29..4.61 rows=16 width=4) (actual time=0.029..0.032 rows=14.00 loops=1)
+   Index Cond: ((date >= '2000-01-01'::date) AND (date < '2000-02-01'::date))
+   Heap Fetches: 0
+   Index Searches: 1
+   Buffers: shared hit=3
+ Planning Time: 0.149 ms
+ Execution Time: 0.055 ms
+(7 rows)
+
+
+Time: 0.811 ms
+```
+
+* Based on my results, the non-SARGable query forced PostgreSQL to evaluate functions on every row, even when an index existed. In contrast, the SARGable version used a direct range comparison, enabling an efficient Index Only Scan with minimal work. This clearly shows that writing SARGable queries and using proper indexes greatly improves query performance and scalability.
