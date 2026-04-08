@@ -17,10 +17,10 @@ OUTPUT_FILE = "seed_data.sql"
 # ----------------------------
 
 names = [
-"Juan Dela Cruz","Maria Santos","Jose Reyes","Ana Cruz","Carlos Mendoza",
-"Mark Bautista","Erika Ramos","Miguel Tan","Catherine Aquino","Victor Lopez",
-"Sofia Garcia","Paolo Villanueva","Rica Fernandez","Kevin Lim","Angela Torres",
-"Joshua Castro","Daniel Flores","Carla Gutierrez","Paula Navarro","Kristine Ramos"
+    "Alvin Cruz","Bea Valdez","Carlito Reyes","Diana Mercado","Edgar Santos",
+    "Faye Navarro","Gerard Lim","Hannah Torres","Ian Villanueva","Joyce Fernandez",
+    "Ken Ramos","Liza Aquino","Marco Tan","Nina Lopez","Oscar Bautista",
+    "Patricia Garcia","Quincy Delgado","Rafael Mendoza","Samantha Castro","Troy Flores"
 ]
 
 regions = [
